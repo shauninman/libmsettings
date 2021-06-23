@@ -1,3 +1,5 @@
+A shared memory settings manager for [MinUI](https://github.com/shauninman/MinUI), a Trimui Model S custom launcher.
+
 # Usage:
 
 1. link `-lmsettings` (probably `-ltinyalsa` too?)
