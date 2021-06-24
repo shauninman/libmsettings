@@ -33,10 +33,7 @@ static int shm_size = sizeof(Settings);
 
 #define HasUSBAudio() access("/dev/dsp1", R_OK | W_OK)==0
 
-static void* libtinyalsa = NULL; // NOTE: required to remove cascading linking requirement
 void InitSettings(void) {
-	if (!libtinyalsa) libtinyalsa = dlopen("/usr/lib/libtinyalsa.so", RTLD_LAZY | RTLD_GLOBAL);
-	
 	shm_fd = shm_open(SHM_KEY, O_RDWR | O_CREAT | O_EXCL, 0644); // see if it exists
 	if (shm_fd==-1 && errno==EEXIST) { // already exists
 		shm_fd = shm_open(SHM_KEY, O_RDWR, 0644);
@@ -94,7 +91,6 @@ void SetVolume(int value) {
 	else {
 		settings->speaker = value;
 	}
-	
 	SaveSettings();
 }
 
