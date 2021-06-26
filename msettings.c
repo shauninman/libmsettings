@@ -31,7 +31,7 @@ static int shm_fd = -1;
 static int is_host = 0;
 static int shm_size = sizeof(Settings);
 
-#define HasUSBAudio() access("/dev/dsp1", R_OK | W_OK)==0
+#define HasUSBAudio() access("/dev/dsp1", F_OK)==0
 
 void InitSettings(void) {
 	shm_fd = shm_open(SHM_KEY, O_RDWR | O_CREAT | O_EXCL, 0644); // see if it exists
