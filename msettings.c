@@ -104,34 +104,51 @@ void SetRawBrightness(int val) {
 void SetRawVolume(int val) {
 	struct mixer *mixer;
 	struct mixer_ctl *ctl;
-	char* name;
+#define	MAX_VOL_CTL_NUM	8
+	static int mixer_vol_ctl_numbers = 0;
+	static int mixer_vol_ctl_num[MAX_VOL_CTL_NUM];
+	static int mixer_vol_ctl_val[MAX_VOL_CTL_NUM];
+	const char *ctl_name;
+	int i,j;
+
 	if (HasUSBAudio()) {
+		// for USB Headphones/Headset
 		mixer = mixer_open(1);
 		if (mixer != NULL) {
-			int num = mixer_get_num_ctls(mixer);
-			for (int i=0; i<num; i++) {
-				ctl = mixer_get_ctl(mixer, i);
-				if (ctl==NULL) continue;
-				char* name = (char *)mixer_ctl_get_name(ctl);
-				if (strstr(name, "Playback Volume") && !strstr(name, "Mic")) {
-					mixer_ctl_set_percent(ctl,0,val);
-					mixer_ctl_set_percent(ctl,1,val);
-					break;
+			// get ctl numbers/values of Volume if needed
+			if (mixer_vol_ctl_numbers == 0) {
+				j = mixer_get_num_ctls(mixer);
+				for (i=0; i<j; i++) {
+					ctl = mixer_get_ctl(mixer,i);
+					if (ctl) {
+						ctl_name = mixer_ctl_get_name(ctl);
+						if (strstr(ctl_name,"Playback Volume") && !strstr(ctl_name,"Mic")) {
+							mixer_vol_ctl_num[mixer_vol_ctl_numbers] = i;
+							mixer_vol_ctl_val[mixer_vol_ctl_numbers] = mixer_ctl_get_num_values(ctl);
+							if (++mixer_vol_ctl_numbers >= MAX_VOL_CTL_NUM) break;
+						}
+					}
+				}
+			}
+			// set Volume to USB Headphones/Headset
+			for (i=0; i < mixer_vol_ctl_numbers; i++) {
+				ctl = mixer_get_ctl(mixer,mixer_vol_ctl_num[i]);
+				if (ctl) {
+					for (j=0; j<mixer_vol_ctl_val[i]; j++) mixer_ctl_set_percent(ctl,j,val);
 				}
 			}
 			mixer_close(mixer);
 			return;
 		}
 	}
-	else {
-		// for internal speaker
-		mixer = mixer_open(0);
-		if (mixer != NULL) {
-			ctl = mixer_get_ctl(mixer,22);
-			if (ctl) {
-				mixer_ctl_set_percent(ctl,0,val);
-			}
-			mixer_close(mixer);
+	// for internal speaker
+	mixer_vol_ctl_numbers = 0;
+	mixer = mixer_open(0);
+	if (mixer != NULL) {
+		ctl = mixer_get_ctl(mixer,22);
+		if (ctl) {
+			mixer_ctl_set_percent(ctl,0,val);
 		}
+		mixer_close(mixer);
 	}
 }
