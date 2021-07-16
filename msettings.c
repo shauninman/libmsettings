@@ -104,20 +104,20 @@ void SetRawBrightness(int val) {
 void SetRawVolume(int val) {
 	struct mixer *mixer;
 	struct mixer_ctl *ctl;
+	char* name;
 	if (HasUSBAudio()) {
 		mixer = mixer_open(1);
 		if (mixer != NULL) {
-			// for USB headphones
-			ctl = mixer_get_ctl(mixer,2);
-			if (ctl) {
-				mixer_ctl_set_percent(ctl,0,val);
-				mixer_ctl_set_percent(ctl,1,val);
-			}
-			// for USB headset
-			ctl = mixer_get_ctl(mixer,4);
-			if (ctl) {
-				mixer_ctl_set_percent(ctl,0,val);
-				mixer_ctl_set_percent(ctl,1,val);
+			int num = mixer_get_num_ctls(mixer);
+			for (int i=0; i<num; i++) {
+				ctl = mixer_get_ctl(mixer, i);
+				if (ctl==NULL) continue;
+				char* name = (char *)mixer_ctl_get_name(ctl);
+				if (strstr(name, "Playback Volume") && !strstr(name, "Mic")) {
+					mixer_ctl_set_percent(ctl,0,val);
+					mixer_ctl_set_percent(ctl,1,val);
+					break;
+				}
 			}
 			mixer_close(mixer);
 			return;
